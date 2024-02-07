@@ -1,0 +1,57 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "examples/with_winit",
+    "examples/run-wasm"
+]
+
+[workspace.package]
+edition = "2021"
+version = "0.0.1"
+license = "MIT"
+repository = "https://github.com/xiaoiver/piet-wgpu"
+
+[package]
+name = "piet-wgpu"
+description = "A wgpu backend for the Piet 2D graphics abstraction"
+categories = ["rendering", "graphics"]
+keywords = ["2d", "wgpu", "vector-graphics"]
+
+# This crate is intended for publishing, but not ready yet
+publish = false
+
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cfg-if = "1"
+bytemuck = { workspace = true }
+piet = { workspace = true }
+wgpu = { workspace = true }
+wgpu-profiler = { workspace = true, optional = true }
+raw-window-handle = "0.5"
+log = "0.4"
+tracing = "0.1.36"
+tracing-subscriber = { version = "0.3.15", features = ["time"] }
+glam = "0.25"
+lyon = "0.17.5"
+unicode-width = "0.1.8"
+thiserror = "1.0.56"
+naga_oil = "0.13.0"
+
+[workspace.dependencies]
+bytemuck = { version = "1.12", features = [ "derive" ] }
+wgpu = "0.18"
+piet = { git = "https://github.com/linebender/piet.git" }
+
+# Used for examples
+clap = "4.1.0"
+anyhow = "1.0"
+instant = { version = "0.1.12", features = ["wasm-bindgen"] }
+pollster = "0.3.0"
+wgpu-profiler = "0.15"

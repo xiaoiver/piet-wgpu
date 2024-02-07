@@ -1,0 +1,58 @@
+[package]
+name = "with_winit"
+description = "An example using vello to render to a winit window"
+publish = false
+
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "with_winit"
+crate-type = ["cdylib", "lib"]
+
+[[bin]]
+# Stop the PDB collision warning on windows
+name = "with_winit_bin"
+path = "src/main.rs"
+
+[dependencies]
+cfg-if = "1"
+anyhow = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+instant = { workspace = true }
+pollster = { workspace = true }
+wgpu-profiler = { workspace = true }
+wgpu = { workspace = true }
+piet = { workspace = true }
+piet-wgpu = { path = "../../" }
+winit = "0.28"
+log = "0.4"
+tracing = "0.1.36"
+tracing-subscriber = { version = "0.3.15", features = ["time"] }
+
+[target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]
+notify-debouncer-mini = "0.3"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_error_panic_hook = "0.1.6"
+console_log = "1.0"
+tracing-wasm = "0.2.1"
+wasm-bindgen = "0.2.90"
+wasm-bindgen-futures = "0.4.40"
+web-sys = { version = "0.3", features = [
+    "Document",
+    "Window",
+    "Element",
+]}
+getrandom = { version = "0.2", features = ["js"] }
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[target.'cfg(target_os = "android")'.dependencies]
+winit = { version = "0.28", features = ["android-native-activity"] }
+android_logger = "0.13.0"
