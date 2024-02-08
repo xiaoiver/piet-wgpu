@@ -10,15 +10,6 @@ repository.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[lib]
-name = "with_winit"
-crate-type = ["cdylib", "lib"]
-
-[[bin]]
-# Stop the PDB collision warning on windows
-name = "with_winit_bin"
-path = "src/main.rs"
-
 [dependencies]
 cfg-if = "1"
 anyhow = { workspace = true }

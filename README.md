@@ -1,19 +1,21 @@
 # piet-wgpu
 
-![build status](https://github.com/xiaoiver/piet-wgpu/actions/workflows/rust.yml/badge.svg)
+![build status](https://github.com/xiaoiver/piet-wgpu/actions/workflows/ci.yml/badge.svg)
 
 The [wgpu] backend for the [Piet 2D graphics abstraction].
 
 Features:
 
-- [-] Use [naga_oil] to combine and manipulate shader chunks.
-- [-] Use SDF for rendering Circle, Ellipse, Rect and Text.
-- [-] Use GPU extruding for Line, Polyline and Path.
-- [-] Auto batching.
+- [x] Use [naga_oil] to combine and manipulate shader chunks.
+- [ ] Use SDF for rendering Circle, Ellipse, Rect and Text.
+- [ ] Use GPU extruding for Line, Polyline and Path.
+- [ ] Auto batching.
 
 ## Examples
 
 ### with_winit
+
+It rely on [raw-window-handle] which provides a common interface that winit can easily talk with.
 
 ```bash
 $ cargo run -p with_winit
@@ -25,6 +27,14 @@ We use [cargo-run-wasm] instead of [trunk] serving the wasm example. It seems th
 
 ```bash
 $ cargo run_wasm -p with_winit
+```
+
+## Development
+
+Use [cargo-watch] like this:
+
+```bash
+$ cargo watch -x 'run_wasm -p with_winit'
 ```
 
 ## Other libs
@@ -44,3 +54,5 @@ $ cargo run_wasm -p with_winit
 [piet-wgpu]: https://github.com/lapce/piet-wgpu/
 [lyon]: https://github.com/nical/lyon
 [rough-rs]: https://github.com/orhanbalci/rough-rs
+[raw-window-handle]: https://github.com/rust-windowing/raw-window-handle
+[cargo-watch]: https://crates.io/crates/cargo-watch

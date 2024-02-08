@@ -5,10 +5,11 @@ use text::{WgpuText, WgpuTextLayout, WgpuTextLayoutBuilder};
 
 mod composer;
 mod context;
+pub mod renderer;
 mod text;
 
 /// The `RenderContext` for the CoreGraphics backend, which is selected.
-pub type Piet = WgpuRenderContext;
+pub type Piet<'a> = WgpuRenderContext<'a>;
 
 /// The associated brush type for this backend.
 ///
@@ -34,8 +35,3 @@ pub type PietTextLayoutBuilder = WgpuTextLayoutBuilder;
 ///
 /// This type matches `RenderContext::Image`
 pub type PietImage = WgpuImage;
-
-/// Catch-all error type.
-pub type Error = Box<dyn std::error::Error>;
-/// Specialization of `Result` for our catch-all error type.
-pub type Result<T> = std::result::Result<T, Error>;
