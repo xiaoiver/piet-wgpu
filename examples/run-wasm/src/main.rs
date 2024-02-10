@@ -17,5 +17,12 @@ fn main() {
         "RUSTFLAGS",
         format!("{current_value} --cfg=web_sys_unstable_apis",),
     );
-    cargo_run_wasm::run_wasm_with_css("body { margin: 0px; }");
+    cargo_run_wasm::run_wasm_with_css(
+        "* { margin:0; padding:0; } 
+    html, body { width:100%; height:100%; }
+    canvas {
+        background-color: black;
+        display:block;
+    }",
+    );
 }

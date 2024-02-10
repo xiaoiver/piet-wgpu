@@ -2,6 +2,8 @@
 resolver = "2"
 
 members = [
+    "crates/macro",
+    "crates/derive",
     "examples/with_winit",
     "examples/run-wasm"
 ]
@@ -34,7 +36,10 @@ bytemuck = { workspace = true }
 piet = { workspace = true }
 wgpu = { workspace = true }
 wgpu-profiler = { workspace = true, optional = true }
+piet_wgpu_proc_macros = { path = "crates/macro" }
+piet_wgpu_derive = { path = "crates/derive" }
 raw-window-handle = "0.5"
+encase = { version = "0.6.1", features = ["glam"] }
 log = "0.4"
 tracing = "0.1.36"
 tracing-subscriber = { version = "0.3.15", features = ["time"] }
@@ -43,10 +48,14 @@ lyon = "0.17.5"
 unicode-width = "0.1.8"
 thiserror = "1.0.56"
 naga_oil = "0.13.0"
+ahash = "0.8.3"
+uuid = { version = "1.1", features = ["v4", "serde"] }
+hashbrown = { version = "0.14", features = ["serde"] }
+nonmax = "0.5"
 
 [workspace.dependencies]
 bytemuck = { version = "1.12", features = [ "derive" ] }
-wgpu = "0.18"
+wgpu = { version = "0.19", features = [ "naga", "naga-ir", "fragile-send-sync-non-atomic-wasm" ] }
 piet = { git = "https://github.com/linebender/piet.git" }
 
 # Used for examples
@@ -54,4 +63,4 @@ clap = "4.1.0"
 anyhow = "1.0"
 instant = { version = "0.1.12", features = ["wasm-bindgen"] }
 pollster = "0.3.0"
-wgpu-profiler = "0.15"
+wgpu-profiler = "0.16"

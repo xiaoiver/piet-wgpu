@@ -1,9 +1,10 @@
 use piet::{kurbo::Rect, Color, RenderContext};
 use piet_wgpu::{renderer::WgpuRenderer, Piet};
 use winit::{
-    dpi::PhysicalSize,
+    dpi::{LogicalSize, PhysicalSize},
     event::*,
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::EventLoop,
+    keyboard::{KeyCode, PhysicalKey::Code},
     window::WindowBuilder,
 };
 
@@ -27,21 +28,37 @@ pub async fn run() {
         }
     }
 
-    let event_loop = EventLoop::new();
-    let window = WindowBuilder::new().build(&event_loop).unwrap();
-    // Winit prevents sizing with CSS, so we have to set
-    // the size manually when on web.
-    window.set_inner_size(PhysicalSize::new(1000, 1000));
+    // @see https://github.com/nanovis/Wenderer/blob/main/src/main.rs
+    let event_loop = EventLoop::new().unwrap();
+
+    let builder = WindowBuilder::new()
+        .with_title("piet wgpu example with winit")
+        .with_inner_size(PhysicalSize::new(100, 100));
+    #[cfg(target_arch = "wasm32")]
+    let builder = {
+        use winit::platform::web::WindowBuilderExtWebSys;
+        builder.with_append(true)
+    };
+    let window = builder.build(&event_loop).unwrap();
 
     #[cfg(target_arch = "wasm32")]
     {
         use winit::platform::web::WindowExtWebSys;
+        let canvas = window.canvas().unwrap();
         // On wasm, append the canvas to the document body
         web_sys::window()
-            .and_then(|win| win.document())
+            .and_then(|win| {
+                let width = win.inner_width().unwrap().as_f64().unwrap() as u32;
+                let height = win.inner_height().unwrap().as_f64().unwrap() as u32;
+                let factor = window.scale_factor();
+                let logical = LogicalSize { width, height };
+                let PhysicalSize { width, height }: PhysicalSize<u32> = logical.to_physical(factor);
+                window.request_inner_size(PhysicalSize::new(width, height));
+                win.document()
+            })
             .and_then(|doc| {
                 let body = doc.body()?;
-                let canvas = web_sys::Element::from(window.canvas());
+                let canvas = web_sys::Element::from(canvas);
                 body.append_child(&canvas).ok()?;
                 Some(())
             })
@@ -54,60 +71,57 @@ pub async fn run() {
         window.inner_size().height,
     )
     .await;
-    let mut rc = Piet::new(&mut renderer);
+    let mut rc = Piet::new(&renderer);
     generate(&mut rc);
     rc.finish().unwrap();
     std::mem::drop(rc);
 
-    event_loop.run(move |event, _, control_flow| match event {
-        Event::WindowEvent {
-            ref event,
-            window_id,
-        } if window_id == window.id() => {
-            if !renderer.input() {
-                match event {
-                    WindowEvent::CloseRequested
-                    | WindowEvent::KeyboardInput {
-                        input:
-                            KeyboardInput {
-                                state: ElementState::Pressed,
-                                virtual_keycode: Some(VirtualKeyCode::Escape),
-                                ..
-                            },
-                        ..
-                    } => *control_flow = ControlFlow::Exit,
+    event_loop
+        .run(|event, event_loop_window_target| match event {
+            Event::WindowEvent {
+                ref event,
+                window_id,
+            } if window_id == window.id() => {
+                match &event {
                     WindowEvent::Resized(physical_size) => {
-                        renderer.resize(physical_size.width, physical_size.height);
+                        renderer.resize((*physical_size).width, (*physical_size).height)
                     }
-                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                        // new_inner_size is &&mut so we have to dereference it twice
-                        renderer.resize(new_inner_size.width, new_inner_size.height);
+                    WindowEvent::ScaleFactorChanged { .. } => {
+                        renderer.resize(window.inner_size().width, window.inner_size().height);
+                    }
+                    WindowEvent::CloseRequested => event_loop_window_target.exit(),
+                    WindowEvent::KeyboardInput { event, .. } => {
+                        if renderer.input() {
+                            window.request_redraw();
+                            return;
+                        }
+                        if event.state.is_pressed() {
+                            match event.physical_key {
+                                Code(KeyCode::Escape) => {
+                                    event_loop_window_target.exit();
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                    WindowEvent::RedrawRequested => {
+                        renderer.update();
+                        match renderer.render() {
+                            Ok(_) => {}
+                            // Recreate the swap_chain if lost
+                            Err(wgpu::SurfaceError::Lost) => {
+                                renderer.resize(renderer.config.width, renderer.config.height)
+                            }
+                            Err(wgpu::SurfaceError::OutOfMemory) => event_loop_window_target.exit(),
+                            Err(e) => eprintln!("Some unhandled error {:?}", e),
+                        }
                     }
                     _ => {}
                 }
             }
-        }
-        Event::RedrawRequested(window_id) if window_id == window.id() => {
-            renderer.update();
-            match renderer.render() {
-                Ok(_) => {}
-                // Reconfigure the surface if lost
-                Err(wgpu::SurfaceError::Lost) => {
-                    renderer.resize(renderer.config.width, renderer.config.height)
-                }
-                // The system is out of memory, we should probably quit
-                Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                // All other errors (Outdated, Timeout) should be resolved by the next frame
-                Err(e) => eprintln!("{:?}", e),
-            }
-        }
-        Event::MainEventsCleared => {
-            // RedrawRequested will only trigger once, unless we manually
-            // request it.
-            window.request_redraw();
-        }
-        _ => {}
-    });
+            _ => {}
+        })
+        .unwrap();
 }
 
 fn main() {

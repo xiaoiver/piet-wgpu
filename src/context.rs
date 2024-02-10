@@ -6,7 +6,6 @@ use piet::{
     StrokeStyle,
 };
 use std::borrow::Cow;
-use tracing::info;
 
 #[doc(hidden)]
 #[derive(Clone)]
@@ -35,7 +34,7 @@ impl Image for WgpuImage {
 }
 
 pub struct WgpuRenderContext<'a> {
-    pub(crate) renderer: &'a mut WgpuRenderer,
+    pub(crate) renderer: &'a WgpuRenderer<'a>,
 
     /// The context state stack. There is always at least one, until finishing.
     ctx_stack: Vec<CtxState>,
@@ -47,7 +46,7 @@ struct CtxState {
 }
 
 impl<'a> WgpuRenderContext<'a> {
-    pub fn new(renderer: &'a mut WgpuRenderer) -> Self {
+    pub fn new(renderer: &'a WgpuRenderer<'a>) -> Self {
         let mut context = Self {
             renderer,
             ctx_stack: vec![CtxState::default()],
@@ -96,8 +95,7 @@ impl<'a> RenderContext for WgpuRenderContext<'a> {
         if let Some(rect) = shape.as_rect() {
             let brush = brush.make_brush(self, || shape.bounding_box()).into_owned();
             let Brush::Solid(color) = brush;
-
-            info!("fill rect {:?}", color);
+            // self.renderer.fill_rect(rect, color);
         }
     }
 

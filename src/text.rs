@@ -1,8 +1,8 @@
 // use font_kit::source::SystemSource;
-use lyon::lyon_tessellation::{
-    BuffersBuilder, FillOptions, FillTessellator, FillVertex, StrokeOptions, StrokeTessellator,
-    StrokeVertex, VertexBuffers,
-};
+// use lyon::lyon_tessellation::{
+//     BuffersBuilder, FillOptions, FillTessellator, FillVertex, StrokeOptions, StrokeTessellator,
+//     StrokeVertex, VertexBuffers,
+// };
 use piet::kurbo::Line;
 use piet::Color;
 use piet::{
@@ -10,7 +10,7 @@ use piet::{
     FontFamily, FontStyle, FontWeight, HitTestPoint, HitTestPosition, LineMetric, Text,
     TextAttribute, TextLayout, TextLayoutBuilder, TextStorage,
 };
-use std::{cell::RefCell, collections::HashMap, ops::Range, rc::Rc};
+use std::{ops::Range, rc::Rc};
 use unicode_width::UnicodeWidthChar;
 
 use crate::context::WgpuRenderContext;

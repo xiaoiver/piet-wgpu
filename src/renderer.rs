@@ -1,31 +1,27 @@
-use naga_oil::compose::Composer;
-use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 use std::iter;
-use tracing::info;
-use wgpu::{Device, Queue, Surface, SurfaceConfiguration};
+use wgpu::{Queue, Surface, SurfaceConfiguration, SurfaceTarget};
 
-use crate::composer::init_composer;
+use crate::render_resource::{PipelineCache, RenderDevice};
 
-pub struct WgpuRenderer {
-    surface: Surface,
-    pub device: Device,
+pub struct WgpuRenderer<'a> {
+    surface: Surface<'a>,
+    pub device: RenderDevice,
     pub queue: Queue,
     pub config: SurfaceConfiguration,
-    composer: Composer,
+    pipeline_cache: PipelineCache,
 }
 
-impl WgpuRenderer {
-    pub async fn new<W>(window: &W, width: u32, height: u32) -> Self
-    where
-        W: HasRawWindowHandle + HasRawDisplayHandle,
-    {
+impl<'a> WgpuRenderer<'a> {
+    pub async fn new(window: impl Into<SurfaceTarget<'a>>, width: u32, height: u32) -> Self {
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
         let instance = wgpu::Instance::default();
 
         // The surface needs to live as long as the window that created it.
         // State owns the window so this should be safe.
-        let surface = unsafe { instance.create_surface(window) }.unwrap();
+        let surface = instance
+            .create_surface(window)
+            .expect("Failed to create surface");
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -40,10 +36,10 @@ impl WgpuRenderer {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    features: wgpu::Features::empty(),
+                    required_features: wgpu::Features::empty(),
                     // WebGL doesn't support all of wgpu's features, so if
                     // we're building for the web we'll have to disable some.
-                    limits: if cfg!(target_arch = "wasm32") {
+                    required_limits: if cfg!(target_arch = "wasm32") {
                         wgpu::Limits::downlevel_webgl2_defaults()
                     } else {
                         wgpu::Limits::default()
@@ -55,6 +51,7 @@ impl WgpuRenderer {
             .unwrap();
 
         let surface_caps = surface.get_capabilities(&adapter);
+        let preferred_format = surface_caps.formats[0];
         // Shader code in this tutorial assumes an Srgb surface texture. Using a different
         // one will result all the colors comming out darker. If you want to support non
         // Srgb surfaces, you'll need to account for that when drawing to the frame.
@@ -71,17 +68,19 @@ impl WgpuRenderer {
             height,
             present_mode: surface_caps.present_modes[0],
             alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![],
-            // desired_maximum_frame_latency: 2,
+            view_formats: vec![preferred_format],
+            desired_maximum_frame_latency: 2,
         };
         surface.configure(&device, &config);
 
+        let render_device = RenderDevice::from(device);
+
         Self {
             surface,
-            device,
+            device: render_device.clone(),
             queue,
             config,
-            composer: init_composer(),
+            pipeline_cache: PipelineCache::new(render_device.clone()),
         }
     }
 
@@ -89,7 +88,7 @@ impl WgpuRenderer {
         if width > 0 && height > 0 {
             self.config.width = width;
             self.config.height = height;
-            self.surface.configure(&self.device, &self.config);
+            self.surface.configure(&self.device.device, &self.config);
         }
     }
 
@@ -104,32 +103,6 @@ impl WgpuRenderer {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
             });
-
-        // {
-        //     let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-        //         label: Some("Render Pass"),
-        //         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-        //             view: &view,
-        //             resolve_target: None,
-        //             ops: wgpu::Operations {
-        //                 load: wgpu::LoadOp::Clear(wgpu::Color {
-        //                     r: 0.1,
-        //                     g: 0.2,
-        //                     b: 0.3,
-        //                     a: 1.0,
-        //                 }),
-        //                 store: wgpu::StoreOp::Store,
-        //             },
-        //         })],
-        //         depth_stencil_attachment: None,
-        //         occlusion_query_set: None,
-        //         timestamp_writes: None,
-        //     });
-
-        //     render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        //     render_pass.set_pipeline(&self.render_pipeline);
-        //     render_pass.draw(0..self.num_vertices, 0..1);
-        // }
 
         self.queue.submit(iter::once(encoder.finish()));
         output.present();

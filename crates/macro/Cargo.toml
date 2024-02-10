@@ -1,0 +1,15 @@
+[package]
+name = "piet_wgpu_proc_macros"
+version = "0.1.0"
+description = "Piet wgpu Utils Proc Macros"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "2.0"
+quote = "1.0"
+proc-macro2 = "1.0"

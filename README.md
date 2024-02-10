@@ -6,10 +6,34 @@ The [wgpu] backend for the [Piet 2D graphics abstraction].
 
 Features:
 
+- [x] Rely on [raw-window-handle] which provides a common interface that [winit] can easily talk with.
 - [x] Use [naga_oil] to combine and manipulate shader chunks.
+- [ ] Framegraph based on bevy.
+- [ ] Auto batching.
 - [ ] Use SDF for rendering Circle, Ellipse, Rect and Text.
 - [ ] Use GPU extruding for Line, Polyline and Path.
-- [ ] Auto batching.
+
+## Getting Started
+
+```rust
+// Create renderer based on wgpu.
+let mut renderer = WgpuRenderer::new(
+    &window,
+    window.inner_size().width,
+    window.inner_size().height,
+).await;
+// Retrieve render context from renderer.
+let mut ctx = Piet::new(&mut renderer);
+
+// Use piet 2D API as usual.
+let rect = Rect::new(0., 0., 100.0, 100.0);
+let color = Color::rgb8(19, 86, 162);
+ctx.fill(rect, &color);
+
+// Release render context at last.
+ctx.finish().unwrap();
+std::mem::drop(ctx);
+```
 
 ## Examples
 
